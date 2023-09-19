@@ -20,17 +20,19 @@ def cli(argv: t.Sequence[str]) -> None:
         village_range = int(argv[1]) if len(argv) > 1 else 6
     except ValueError as e:
         raise u.ReusError("Usage: reus-fish-calculator [CITY_RANGE=6]") from e
-    world = m.World(layout=(
-        Seabass,
-        Clownfish,
-        Parrotfish,
-        Tuna,
-        Parrotfish,
-        Seabass,
-        Mackerel,
-        Tuna,
-        Mackerel,
-    ))
+    world = m.World(
+        layout=(
+            Seabass,
+            Clownfish,
+            Parrotfish,
+            Tuna,
+            Parrotfish,
+            Seabass,
+            Mackerel,
+            Tuna,
+            Mackerel,
+        )
+    )
     resources = world.all_yields(until=village_range)
     total = m.Yields.sum(resources.values())
 

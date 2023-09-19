@@ -34,8 +34,8 @@ class Yields:
     gold: int = 0
     tech: int = 0
     danger: int = 0
-#   natura: int = 0
-#   awe: int = 0
+    #   natura: int = 0
+    #   awe: int = 0
 
     @property
     def prosperity(self) -> int:
@@ -101,10 +101,7 @@ class World:
         return self.sources.index(source)
 
     def near_source(
-            self,
-            source: Source | int,
-            matching: SourceMatch | None = None,
-            distance: int = 1
+        self, source: Source | int, matching: SourceMatch | None = None, distance: int = 1
     ) -> list[Source]:
         """List of sources near a source or tile matching a type in a given radius"""
         if distance <= 0:
@@ -117,7 +114,7 @@ class World:
         except (ValueError, IndexError):
             log.warning("Natural Source not found: %s", source)
             return []
-        sources: list[Source] = self.sources[max(idx - distance, 0):idx + distance + 1]
+        sources: list[Source] = self.sources[max(idx - distance, 0) : idx + distance + 1]
         sources.remove(src)
         if matching is not None:
             sources = [s for s in sources if isinstance(s, matching)]
@@ -131,15 +128,17 @@ class World:
                 tiles.setdefault(tile, [])
                 tiles[tile].append(yields)
         return {
-            k: Yields.sum(v) for k, v in tiles.items()
+            k: Yields.sum(v)
+            for k, v in tiles.items()
             if (start is None or k >= start) and (until is None or k < until)
         }
 
 
 class Source:
     """Base class for all Natural Sources"""
-    BASE:  t.ClassVar[Yields] = Yields()
-#    LEVEL: t.ClassVar[int] = 1
+
+    BASE: t.ClassVar[Yields] = Yields()
+    #    LEVEL: t.ClassVar[int] = 1
     SLOTS: t.ClassVar[int] = 1  # Default for Level 1, Tier 1 sources
 
     def __init__(self) -> None:
@@ -185,6 +184,7 @@ class Source:
 
 class Animal(Source):
     """Base class for Animals"""
+
     RANGE: t.ClassVar[int] = 2
     ASPECTS: list[Aspect]  # Mandatory aspects
 

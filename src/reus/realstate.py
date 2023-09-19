@@ -6,6 +6,8 @@
 Available irrigated land (for forests and swamps) based on oceans count and width
 Draft WIP
 """
+from __future__ import annotations
+
 import logging
 
 from . import util
@@ -28,28 +30,33 @@ WORLD = 100  # 6 * 13 patches, 2 oceans (9 each), 1 mountain (5), -1 desert patc
 #     return forest(num, size) + ocean(num, size)
 
 
-def forest(num, size):
-    return (size + 4) * 2 * num    # == 2 * ocean + 8 * num
+def forest(num: int, size: float) -> float:
+    return (size + 4) * 2 * num  # == 2 * ocean + 8 * num
 
 
-def tiles(num, size):
+def tiles(num: int, size: float) -> float:
     ocean = num * size
     return ocean + forest(num, size)  # == num * (3 * size + 8)
 
 
-def main(total):
-    def width(n):
+def main(total: int) -> None:
+    def width(n: int) -> float:
         return ((total / n) - 8) / 3  # solving size for num
 
     max_num = int(total / (3 * MIN_SIZE + 8))  # solving num for size == MIN_SIZE
     for num in range(1, max_num + 1):
         s = width(num)
         for size in (s, int(s), int(s) + 1):
-            log.info("%2d oceans size %4.1f take %5.1f tiles and yield %5.1f forest",
-                     num, size, tiles(num, size), forest(num, size))
+            log.info(
+                "%2d oceans size %4.1f take %5.1f tiles and yield %5.1f forest",
+                num,
+                size,
+                tiles(num, size),
+                forest(num, size),
+            )
 
 
-def cli(argv):
+def cli(argv: list[str]) -> None:
     logging.basicConfig(level=logging.INFO)
     try:
         main(int(argv[1]))

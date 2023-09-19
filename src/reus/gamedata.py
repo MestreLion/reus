@@ -13,6 +13,7 @@ from .model import *  # '*' also re-exports symbols
 log = logging.getLogger(__name__)
 
 
+# fmt: off
 class LesserHerd(Aspect):      BONUS = Yields(food=1), 3
 class PotentHerd(Aspect):      BONUS = Yields(food=1), Yields(food=2), 7
 class GreaterHerd(Aspect):     BONUS = Yields(food=2), Yields(food=3), 14
@@ -25,6 +26,7 @@ class LesserPredator(Aspect):  BONUS = Yields(gold=1), 3
 class PotentPredator(Aspect):  BONUS = Yields(gold=1, danger=1), Yields(gold=2, danger=1), 7
 class GreaterPredator(Aspect): BONUS = Yields(gold=2, danger=2), Yields(gold=3, danger=2), 14
 class SublimePredator(Aspect): BONUS = Yields(gold=3, danger=2), Yields(gold=4, danger=2), 30
+# fmt: on
 
 
 class Fish(Animal):
@@ -50,8 +52,7 @@ class Mackerel(Fish):
         bonus = 0
         for _ in range(self.SYMB.max):
             bonus = min(
-                self.SYMB.max,
-                self.SYMB.bonus * len(self.near(Mackerel, self.RANGE + bonus))
+                self.SYMB.max, self.SYMB.bonus * len(self.near(Mackerel, self.RANGE + bonus))
             )
             if bonus in (0, self.SYMB.max):
                 return bonus
@@ -164,9 +165,12 @@ class Tuna(Fish):
         Growing Hunters: +0.5 Food for each 1 Wealth in neighboring
         Clownfish, Parrotfish, or Marlin.
         """
-        bonus: float = self.GROWING_HUNTERS.factor * Yields.sum(
-            fish.yields for fish in self.near((Clownfish, Parrotfish, Marlin))
-        ).gold
+        bonus: float = (
+            self.GROWING_HUNTERS.factor
+            * Yields.sum(
+                fish.yields for fish in self.near((Clownfish, Parrotfish, Marlin))
+            ).gold
+        )
         return bonus * Yields(food=1)
 
     def territorial(self) -> Yields:

@@ -18,14 +18,14 @@ from . import util as u
 __version__ = "2023.9.19"
 
 ENTRY_POINTS: dict[str, t.Callable[[list[str]], None]] = {
-    'reus-fish-calculator': fishcalc.cli,
-    'reus-realstate':       realstate.cli,
+    "reus-fish-calculator": fishcalc.cli,
+    "reus-realstate": realstate.cli,
 }
 
 log: logging.Logger = logging.getLogger(__package__)
 
 
-def cli(argv:  list[str] | None = None) -> None:
+def cli(argv: list[str] | None = None) -> None:
     """Command-line argument handling and logging setup"""
     parser = u.ArgumentParser(description=__doc__, version=__version__)
     parser.add_argument(
