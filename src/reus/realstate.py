@@ -7,7 +7,10 @@ Available irrigated land (for forests and swamps) based on oceans count and widt
 Draft WIP
 """
 import logging
-import sys
+
+from . import util
+
+log = logging.getLogger(__name__)
 
 MIN_SIZE = 6
 # WORLD = 103  # 2 mountains (5) and their deserts (2*14), 1 ocean (9), 2 forests (13), 2 tiles
@@ -46,7 +49,9 @@ def main(total):
                      num, size, tiles(num, size), forest(num, size))
 
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger('reus')
-
-main(int(sys.argv[1]))
+def cli(argv):
+    logging.basicConfig(level=logging.INFO)
+    try:
+        main(int(argv[1]))
+    except IndexError as e:
+        raise util.ReusError("Usage: reus-realstate NUM") from e

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import pprint
+
 import typing_extensions as t
 
 if t.TYPE_CHECKING:
@@ -16,6 +18,9 @@ if t.TYPE_CHECKING:
     PathLike: t.TypeAlias = t.Union[str, bytes, os.PathLike]
 
 log: logging.Logger = logging.getLogger(__name__)
+
+Data = argparse.Namespace
+Data.__doc__ = "Simple and untyped dataclass for disposable data"
 
 
 # For ArgumentParser.epilog
@@ -37,8 +42,11 @@ class ReusError(Exception):
 
 
 def printf(msg: object = "", *args: object) -> None:
-    """print() wrapper with %-formatting for args"""
-    print((str(msg) % args) if args else msg)
+    """print() wrapper with %-formatting for args and pretty print for objects"""
+    if args or isinstance(msg, str):
+        print((str(msg) % args) if args else msg)
+    else:
+        pprint.pprint(msg)
 
 
 def setup_logging(

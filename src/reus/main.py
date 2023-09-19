@@ -4,18 +4,28 @@
 """
 Reus Game tools
 """
+from __future__ import annotations
+
 import logging
+import os.path
 import sys
 import typing_extensions as t
 
+from . import fishcalc
+from . import realstate
 from . import util as u
 
 __version__ = "2023.9.19"
 
+ENTRY_POINTS: dict[str, t.Callable[[list[str]], None]] = {
+    'reus-fish-calculator': fishcalc.cli,
+    'reus-realstate':       realstate.cli,
+}
+
 log: logging.Logger = logging.getLogger(__package__)
 
 
-def cli(argv: t.Optional[t.List[str]] = None) -> None:
+def cli(argv:  list[str] | None = None) -> None:
     """Command-line argument handling and logging setup"""
     parser = u.ArgumentParser(description=__doc__, version=__version__)
     parser.add_argument(
@@ -45,13 +55,24 @@ def cli(argv: t.Optional[t.List[str]] = None) -> None:
     u.setup_logging(level=args.loglevel, fmt="%(levelname)-8s: %(message)s")
     log.debug(args)
 
-    log.info("Hello World!")
+    u.printf("Hello World!")
 
 
-def run(argv: t.Optional[t.List[str]] = None) -> None:
+def dispatcher(argv: list[str] | None = None) -> None:
+    # Normalize argv
+    args: list[str] = (sys.argv if argv is None else argv)[:]
+    if not args:
+        args.append(sys.argv[0])
+
+    # Dispatch based on executable name
+    name: str = os.path.basename(args[0])
+    ENTRY_POINTS.get(name, cli)(args)
+
+
+def run(argv: list[str] | None = None) -> None:
     """CLI entry point, handling exceptions from cli() and setting exit code"""
     try:
-        cli(argv)
+        dispatcher(argv)
     except u.ReusError as err:
         log.critical(err)
         sys.exit(1)
