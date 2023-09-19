@@ -109,7 +109,7 @@ class Parrotfish(Fish):
         Barrier Dweller: +1 Wealth and +1 Technology
         for each other different fish type within Animal Range.
         """
-        return self.SYMB * len(set(fish.name for fish in self.near_range(Fish)))
+        return self.SYMB * len(set(fish.kind for fish in self.near_range(Fish)))
 
 
 class GreatParrotfish(Parrotfish):

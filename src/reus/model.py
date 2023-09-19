@@ -146,7 +146,15 @@ class Source:
 
     @property
     def name(self) -> str:
+        # Too bad classmethod properties were deprecated in 3.11...
         return self.__class__.__name__
+
+    @property
+    def kind(self) -> str:
+        # 2 options here: via string manipulation on name (easy but lame),
+        # or diving into __mro__ for proper OOP, but good luck with that!
+        # Guess the chosen approach?
+        return self.name.lstrip("Great").lstrip("Superior")
 
     @property
     def tile(self) -> int:
