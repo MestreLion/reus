@@ -1,0 +1,84 @@
+# -----------------------------------------------------------------------------
+# Metadata
+# https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+[project]
+name = "reus"
+authors = [
+    {name="Rodrigo Silva (MestreLion)", email="linux@rodrigosilva.com"},
+]
+description = "Tools and assorted scripts for [Reus game][1]"
+license =  {text = "GPL-3.0-or-later"}  # Free text, using SPDX for now
+urls."Homepage" = "https://github.com/MestreLion/reus"
+urls."Source Code" = "https://github.com/MestreLion/reus"
+urls."Issue Tracker" = "https://github.com/MestreLion/reus/issues"
+readme = "README.md"
+keywords = ["reus", "game", "simulator", "calculator"]
+classifiers = [
+    # https://pypi.org/classifiers/
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Games/Entertainment",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+
+# -----------------------------------------------------------------------------
+# Requirements
+requires-python = ">=3.7"  # setuptools >= 59.3, typing_extensions
+dependencies = [
+    # For Self (3.11), TypeAlias (3.10), possibly others
+    # v4.7.0 exports all names from typing, a welcome convenience
+    "typing_extensions >= 4.7; python_version < '3.11'",
+]
+[project.optional-dependencies]
+dev = [
+    "black",
+    "mypy >= 0.900",  # pyproject.toml
+]
+publish = [
+    "build",
+    "twine",
+]
+# -----------------------------------------------------------------------------
+# Entry points
+[project.scripts]
+reus-fish-calculator = "reus.main:run"
+reus-realstate = "reus.main:run"
+
+# -----------------------------------------------------------------------------
+# Building
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+[build-system]
+requires = ["setuptools >= 61.0"]  # Supports pyproject.toml configuration
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-data = {'*' = ['py.typed']}
+
+[tool.setuptools.dynamic]
+version = {attr = "reus.main.__version__"}
+
+# -----------------------------------------------------------------------------
+# Tools
+
+# Run as: make check
+[tool.mypy]
+packages = "reus"
+exclude = ["venv"]
+strict = true
+
+# Run as: make format
+[tool.black]
+target-version = ["py37", "py38", "py39", "py310", "py311"]
+line-length = 96
