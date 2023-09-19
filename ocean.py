@@ -12,14 +12,12 @@ import dataclasses
 import logging
 import pprint
 import sys
-import typing as t
-
-import typing_extensions as te
+import typing_extensions as t
 
 log = logging.getLogger(__name__)
 
-TSource: te.TypeAlias = t.Type["Source"]
-SourceMatch: te.TypeAlias = t.Union[TSource, t.Tuple[TSource, ...]]
+TSource: t.TypeAlias = t.Type["Source"]
+SourceMatch: t.TypeAlias = t.Union[TSource, t.Tuple[TSource, ...]]
 Data = argparse.Namespace
 
 
@@ -37,12 +35,12 @@ class Yields:
         return self.food + self.gold + self.tech
 
     @classmethod
-    def sum(cls, yields_iterable: t.Iterable[te.Self]) -> te.Self:
+    def sum(cls, yields_iterable: t.Iterable[t.Self]) -> t.Self:
         # Natura works very differently, using max instead of sum
         # Awe is also different, it does not work per-tile
         return cls(*map(sum, zip(*yields_iterable)))
 
-    def scale(self, factor: int | float) -> te.Self:
+    def scale(self, factor: int | float) -> t.Self:
         # Pycharm bug, works fine and mypy agrees
         # noinspection PyArgumentList
         return self.__class__(*map(int, map(factor.__mul__, self)))
@@ -50,14 +48,14 @@ class Yields:
     def __iter__(self) -> t.Iterator[t.Any]:
         return (getattr(self, field.name) for field in dataclasses.fields(self))
 
-    def __add__(self, other: object) -> te.Self:
+    def __add__(self, other: object) -> t.Self:
         if not isinstance(other, self.__class__):
             return NotImplemented
         # Pycharm bug, works fine and mypy agrees
         # noinspection PyArgumentList
         return self.__class__(*(a + b for a, b in zip(self, other)))  # .sum((self, other))
 
-    def __radd__(self, other: object) -> te.Self:
+    def __radd__(self, other: object) -> t.Self:
         # Special-case zero so regular sum() works, as it will start with 0 + self.
         # It will, however, have return type of Union[Yields, Literal[0]],
         # as sum() returns 0 for an empty iterable.
@@ -65,12 +63,12 @@ class Yields:
             return self
         return self.__add__(other)
 
-    def __mul__(self, other: object) -> te.Self:
+    def __mul__(self, other: object) -> t.Self:
         if not isinstance(other, (int, float)):
             return NotImplemented
         return self.scale(other)
 
-    def __rmul__(self, other: object) -> te.Self:
+    def __rmul__(self, other: object) -> t.Self:
         # For int * Yields
         return self.__mul__(other)
 
