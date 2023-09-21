@@ -52,7 +52,7 @@ class Mackerel(Fish):
         bonus = 0
         for _ in range(self.SYMB.max):
             bonus = min(
-                self.SYMB.max, self.SYMB.bonus * len(self.near(Mackerel, self.RANGE + bonus))
+                self.SYMB.max, self.SYMB.bonus * len(self.nearby(Mackerel, self.RANGE + bonus))
             )
             if bonus in (0, self.SYMB.max):
                 return bonus
@@ -80,7 +80,7 @@ class Clownfish(Fish):
 
     def coral_dweller(self) -> Yields:
         """Coral Dweller: +2 Wealth if next to another Clownfish or Parrotfish."""
-        return self.SYMB if self.near((Clownfish, Parrotfish)) else Yields()
+        return self.SYMB if self.nearby((Clownfish, Parrotfish)) else Yields()
 
 
 class GreatClownfish(Clownfish):
@@ -109,7 +109,7 @@ class Parrotfish(Fish):
         Barrier Dweller: +1 Wealth and +1 Technology
         for each other different fish type within Animal Range.
         """
-        return self.SYMB * len(set(fish.kind for fish in self.near_range(Fish)))
+        return self.SYMB * len(set(fish.kind for fish in self.within_range(Fish)))
 
 
 class GreatParrotfish(Parrotfish):
@@ -135,7 +135,7 @@ class Seabass(Fish):
 
     def predator(self) -> Yields:
         """Predator: +3 Food if there is a Mackerel or Clownfish within Animal Range."""
-        return self.SYMB if self.near_range((Mackerel, Clownfish)) else Yields()
+        return self.SYMB if self.within_range((Mackerel, Clownfish)) else Yields()
 
 
 class GreatSeabass(Seabass):
@@ -153,7 +153,7 @@ class SuperiorSeabass(GreatSeabass):
 class Tuna(Fish):
     SLOTS = 4
     BASE = Yields(food=4)
-    GROWING_HUNTERS = Data(factor=0.5)
+    GROWING_HUNTERS = Data(food_factor=0.5, per_gold=1)
     TERRITORIAL = Yields(food=3)
 
     @property
@@ -165,23 +165,24 @@ class Tuna(Fish):
         Growing Hunters: +0.5 Food for each 1 Wealth in neighboring
         Clownfish, Parrotfish, or Marlin.
         """
-        bonus: float = (
-            self.GROWING_HUNTERS.factor
-            * Yields.sum(
-                fish.yields for fish in self.near((Clownfish, Parrotfish, Marlin))
+        factor: float = (
+            Yields.sum(
+                fish.yields for fish in self.nearby((Clownfish, Parrotfish, Marlin))
             ).gold
-        )
-        return bonus * Yields(food=1)
+            // self.GROWING_HUNTERS.per_gold
+        ) * self.GROWING_HUNTERS.food_factor
+        log.info("tuna factor: %s", factor)
+        return factor * Yields(food=1)
 
     def territorial(self) -> Yields:
         """Territorial: +3 Food if there is no other Tuna within Animal-Range."""
-        return self.TERRITORIAL if not self.near_range(Tuna) else Yields()
+        return self.TERRITORIAL if not self.within_range(Tuna) else Yields()
 
 
 class GreatTuna(Tuna):
     SLOTS = 5
     BASE = Yields(food=8)
-    GROWING_HUNTERS = Data(factor=0.75)
+    GROWING_HUNTERS = Data(food_factor=0.75, per_gold=1)
     TERRITORIAL = Yields(food=6)
 
 

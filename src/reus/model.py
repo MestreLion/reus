@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import operator
+
 import typing_extensions as t
 
-from . import util  # Just for Data, to export to gamedata
+from . import util as u
 
 __all__ = [
     "Data",
@@ -25,7 +27,7 @@ log = logging.getLogger(__name__)
 
 TSource: t.TypeAlias = t.Type["Source"]
 SourceMatch: t.TypeAlias = t.Union[TSource, t.Tuple[TSource, ...]]
-Data = util.Data
+Data = u.Data
 
 
 @dataclasses.dataclass
@@ -33,24 +35,21 @@ class Yields:
     food: int = 0
     gold: int = 0
     tech: int = 0
-    danger: int = 0
-    #   natura: int = 0
-    #   awe: int = 0
+    awe: int = 0  # Comes before Danger and Natura since it's provided by all kinds of Sources.
+    danger: int = 0  # Only provided by Animals, otherwise follow the same rules.
+    # natura: int = 0  # Only provided by Plants and has unique rule, not a village resource.
 
     @property
     def prosperity(self) -> int:
         return self.food + self.gold + self.tech
 
     @classmethod
-    def sum(cls, yields_iterable: t.Iterable[t.Self]) -> t.Self:
+    def sum(cls, iterable: t.Iterable[t.Self]) -> t.Self:
         # Natura works very differently, using max instead of sum
-        # Awe is also different, it does not work per-tile
-        return cls(*map(sum, zip(*yields_iterable)))
+        return cls(*map(sum, zip(*iterable)))
 
-    def scale(self, factor: int | float) -> t.Self:
-        # Pycharm bug, works fine and mypy agrees
-        # noinspection PyArgumentList
-        return self.__class__(*map(int, map(factor.__mul__, self)))
+    # Intentionally has no __len__, for now. Has no use, and helps spot a misplaced len().
+    # Has no __sub__ or __neg__ simply because they have no use yet.
 
     def __iter__(self) -> t.Iterator[t.Any]:
         return (getattr(self, field.name) for field in dataclasses.fields(self))
@@ -58,9 +57,13 @@ class Yields:
     def __add__(self, other: object) -> t.Self:
         if not isinstance(other, self.__class__):
             return NotImplemented
-        # Pycharm bug, works fine and mypy agrees
+        # Alternatives:
+        # 4.378: self.__class__(*(a + b for a, b in zip(self, other)))
+        # 4.349: self.__class__.sum((self, other))
+        # 3.874: current
         # noinspection PyArgumentList
-        return self.__class__(*(a + b for a, b in zip(self, other)))  # .sum((self, other))
+        # Pycharm bug: https://youtrack.jetbrains.com/issue/PY-54359
+        return self.__class__(*map(operator.add, self, other))
 
     def __radd__(self, other: object) -> t.Self:
         # Special-case zero so regular sum() works, as it will start with 0 + self.
@@ -73,11 +76,21 @@ class Yields:
     def __mul__(self, other: object) -> t.Self:
         if not isinstance(other, (int, float)):
             return NotImplemented
-        return self.scale(other)
+        # noinspection PyArgumentList
+        return self.__class__(*map(int, map(other.__mul__, self)))
 
     def __rmul__(self, other: object) -> t.Self:
-        # For int * Yields
+        # For num * Yields
         return self.__mul__(other)
+
+    def __truediv__(self, other: object) -> t.Self:
+        return self.__floordiv__(other)
+
+    def __floordiv__(self, other: object) -> t.Self:
+        if not isinstance(other, (int, float)):
+            return NotImplemented
+        # noinspection PyArgumentList
+        return self.__class__(*map(int, map(other.__rfloordiv__, self)))
 
     def __str__(self) -> str:
         # NamedTuple version: vars(self), defaults = self._asdict(), self._field_defaults
@@ -97,28 +110,43 @@ class World:
             source.world = self
             self.sources.append(source)
 
-    def source_tile(self, source: Source) -> int:
-        return self.sources.index(source)
+    def source(self, tile: int) -> Source:
+        """The source in a tile (index)"""
+        try:
+            return self.sources[tile]
+        except ValueError as e:
+            raise u.ReusError("Tile not found: %s", tile) from e
 
-    def near_source(
-        self, source: Source | int, matching: SourceMatch | None = None, distance: int = 1
+    def tile(self, source: Source) -> int:
+        """The tile (index) of a source"""
+        try:
+            return self.sources.index(source)
+        except ValueError as e:
+            raise u.ReusError("Natural Source not found: %s", source) from e
+
+    def nearby_sources(
+        self, source: Source, matching: SourceMatch | None = None, distance: int = 1
     ) -> list[Source]:
-        """List of sources near a source or tile matching a type in a given radius"""
+        """List of sources matching a type within a given distance from a source"""
         if distance <= 0:
             return []
-        try:
-            if isinstance(source, int):
-                idx, src = source, self.sources[source]
-            else:
-                idx, src = self.source_tile(source), source
-        except (ValueError, IndexError):
-            log.warning("Natural Source not found: %s", source)
-            return []
-        sources: list[Source] = self.sources[max(idx - distance, 0) : idx + distance + 1]
-        sources.remove(src)
+        tile = self.tile(source)
+        sources: list[Source] = self.sources[max(tile - distance, 0) : tile + distance + 1]
+        # do not be tempted to remove by title, as source might not be in the middle position
+        sources.remove(source)
         if matching is not None:
             sources = [s for s in sources if isinstance(s, matching)]
         return sources
+
+    def nearby_yields(
+        self, source: Source, matching: SourceMatch | None = None, distance: int = 1
+    ) -> Yields:
+        """Total Yields nearby a given source, regardless of provider"""
+        all_yields = self.all_yields()
+        return Yields.sum(
+            all_yields[self.tile(src)]
+            for src in self.nearby_sources(source, matching, distance)
+        )
 
     def all_yields(self, until: int | None = None, start: int | None = 0) -> dict[int, Yields]:
         """Dictionary of tiles->yields, with optional start and stop (exclusive) tiles"""
@@ -159,12 +187,13 @@ class Source:
     @property
     def tile(self) -> int:
         if self.world is None:
-            return 0
-        return self.world.source_tile(self)
+            # Don't use __str__ or __repr__, in subclasses they might require world set too
+            raise u.ReusError("Tile not available for %s, World is not set", self.name)
+        return self.world.tile(self)
 
     @property
     def natura(self) -> int:
-        """Effective Natura on source, NOT the Natura produced by it"""
+        """Effective Natura on source, NOT the Natura provided by it"""
         return 0
 
     @property
@@ -178,13 +207,13 @@ class Source:
         return Yields.sum(self.all_yields().values())
 
     def all_yields(self, relative: bool = True) -> dict[int, Yields]:
-        """Yields per tile on all affected tiles"""
+        """Yields by itself per tile on all affected tiles"""
         return {0 if relative else self.tile: self.yields}
 
-    def near(self, matching: SourceMatch | None = None, distance: int = 1) -> list[Source]:
+    def nearby(self, matching: SourceMatch | None = None, distance: int = 1) -> list[Source]:
         if self.world is None:
             return []
-        return self.world.near_source(self, matching=matching, distance=distance)
+        return self.world.nearby_sources(self, matching=matching, distance=distance)
 
     def __repr__(self) -> str:
         return f"<{self.name}({self.yields})>"
@@ -206,8 +235,8 @@ class Animal(Source):
     def range(self) -> int:
         return self.RANGE
 
-    def near_range(self, matching: SourceMatch) -> list[Source]:
-        return super().near(matching=matching, distance=self.range)
+    def within_range(self, matching: SourceMatch) -> list[Source]:
+        return super().nearby(matching=matching, distance=self.range)
 
     def __repr__(self) -> str:
         content = str(self.yields)
