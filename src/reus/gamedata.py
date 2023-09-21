@@ -189,3 +189,70 @@ class GreatTuna(Tuna):
 class Marlin(Fish):
     SLOTS = 4
     BASE = Yields(food=2)
+    VIGOROUS_SPECIMEN = Yields(food=4, tech=2)
+    HUGE_SPECIMEN = Yields(gold=4, tech=2)
+
+    @property
+    def yields(self) -> Yields:
+        return super().yields + self.vigorous_specimen() + self.huge_specimen()
+
+    def vigorous_specimen(self) -> Yields:
+        """
+        Vigorous Specimen: +4 Food and +2 Technology
+        for each Seabass within Animal Range.
+        """
+        return self.VIGOROUS_SPECIMEN * len(self.within_range(Seabass))
+
+    def huge_specimen(self) -> Yields:
+        """
+        Huge Specimen: +4 Wealth and +2 Technology
+        for each Parrotfish within Animal-Range.
+        """
+        return self.HUGE_SPECIMEN * len(self.within_range(Parrotfish))
+
+
+class GreatMarlin(Marlin):
+    SLOTS = 5
+    BASE = Yields(food=4)
+    VIGOROUS_SPECIMEN = Yields(food=6, tech=3)
+    HUGE_SPECIMEN = Yields(gold=6, tech=3)
+
+
+class Anglerfish(Fish):
+    SLOTS = 4
+    BASE = Yields(gold=6)
+    WEIRD_DEEPS = Data(tech_factor=0.75, per_food=1)
+    LEGENDARY_PROPORTIONS = Data(bonus=Yields(awe=5), min_tech=10)
+
+    @property
+    def yields(self) -> Yields:
+        return super().yields + self.weird_deeps() + self.legendary_proportions()
+
+    def weird_deeps(self) -> Yields:
+        """
+        Weird Deeps: +0.75 Technology for each 1 Food
+        in neighboring Mackerel, Seabass or Marlin.
+        """
+        # Careful with Precedence! (yields.food // per_food) must be evaluated before to make
+        # sure it is truncated as in the game. This is regardless of Yields truncation.
+        factor: float = self.WEIRD_DEEPS.tech_factor * (
+            Yields.sum(fish.yields for fish in self.nearby((Mackerel, Seabass, Marlin))).food
+            // self.WEIRD_DEEPS.per_food
+        )
+        return factor * Yields(tech=1)
+
+    def legendary_proportions(self) -> Yields:
+        """Legendary Proportions: +5 Awe if this Anglerfish has at least 10 Technology."""
+        bonus: Yields = (
+            self.LEGENDARY_PROPORTIONS.bonus
+            if self.yields.tech >= self.LEGENDARY_PROPORTIONS.min_tech
+            else Yields()
+        )
+        return bonus
+
+
+class GreatAnglerfish(Fish):
+    SLOTS = 5
+    BASE = Yields(gold=12)
+    WEIRD_DEEPS = Data(tech_factor=1.5, per_food=2)
+    LEGENDARY_PROPORTIONS = Data(bonus=Yields(awe=8), min_tech=10)

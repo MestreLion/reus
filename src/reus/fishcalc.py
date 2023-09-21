@@ -27,9 +27,8 @@ def cli(argv: t.Sequence[str]) -> None:
             Parrotfish,
             Tuna,
             Parrotfish,
-            Seabass,
-            Mackerel,
             Tuna,
+            Seabass,
             Mackerel,
         )
     )
