@@ -20,6 +20,8 @@ __all__ = [
     "World",
     "Source",
     "Animal",
+    "Mineral",
+    "Plant",
     "Aspect",
 ]
 
@@ -243,6 +245,14 @@ class Animal(Source):
         if self.range != self.RANGE:
             content += f", range={self.range}"
         return f"<{self.name}({content})>"
+
+
+class Mineral(Source):
+    """Base class for Minerals"""
+
+
+class Plant(Source):
+    """Base class for Plant"""
 
 
 # Unused, for now just a way to dump game data values

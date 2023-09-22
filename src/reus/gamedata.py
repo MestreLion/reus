@@ -256,3 +256,79 @@ class GreatAnglerfish(Fish):
     BASE = Yields(gold=12)
     WEIRD_DEEPS = Data(tech_factor=1.5, per_food=2)
     LEGENDARY_PROPORTIONS = Data(bonus=Yields(awe=8), min_tech=10)
+
+
+class BlueWhale(Fish):  # Well, not really a Fish...
+    SLOTS = 6
+    BASE = Yields(food=8)
+    GREAT_VOYAGE = Data(bonus=Yields(food=25), range=1)
+    MAJESTY = Yields(food=5, awe=5)
+
+    @property
+    def range(self) -> int:
+        return super().range + self.great_voyage()[1]
+
+    @property
+    def yields(self) -> Yields:
+        return super().yields + self.great_voyage()[0] + self.majesty()
+
+    def great_voyage(self) -> tuple[Yields, int]:
+        """
+        Great Voyage: +25 Food and +1 Range if neighboring patches have no Natural Sources.
+        """
+        return (
+            (Yields(food=25), 1)
+            if not self.nearby((Mineral, Plant, Animal))
+            else (Yields(), 0)
+        )
+
+    def majesty(self) -> Yields:
+        """
+        Majesty: +5 Awe and +5 Food for each Tuna, Seabass and Mackerel within Animal-Range.
+        """
+        return Yields(awe=5, food=5) * len(self.within_range((Tuna, Seabass, Mackerel)))
+
+
+class WhiteShark(Fish):
+    SLOTS = 6
+    BASE = Yields(food=5, gold=10)
+
+    @property
+    def yields(self) -> Yields:
+        return super().yields + self.deep_sea_killer() + self.hunted()
+
+    def deep_sea_killer(self) -> Yields:
+        """
+        Deep Sea Killer: +4 Danger for each White Shark or Marlin within Animal-Range.
+        """
+        return Yields(danger=4) * len(self.within_range((WhiteShark, Marlin)))
+
+    def hunted(self) -> Yields:
+        """
+        Hunted: +30 Wealth but -1 Wealth for each 1 Danger on this White Shark.
+        """
+        return Yields(gold=30 - self.yields.danger)
+
+
+class Dolphin(Fish):  # Not a fish either...
+    SLOTS = 7
+    BASE = Yields(food=2, gold=2)
+    SYMB = Yields(tech=5, awe=3)
+
+    @property
+    def yields(self) -> Yields:
+        return super().yields + self.barrier_dweller() + self.pod()
+
+    def barrier_dweller(self) -> Yields:
+        """
+        Barrier Dweller: +5 Technology and +3 Awe
+        for each other different fish type within Animal Range.
+        """
+        # Alternative since we parametrized it: return Parrotfish.barrier_dweller(self)
+        return self.SYMB * len(set(fish.kind for fish in self.within_range(Fish)))
+
+    def pod(self):
+        """
+        Pod: +10 Food and +15 Wealth if next to a Parrotfish or another Dolphin.
+        """
+        return Yields(food=10, gold=15) if self.nearby((Parrotfish, Dolphin)) else Yields()
