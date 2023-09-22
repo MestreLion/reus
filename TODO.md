@@ -149,14 +149,28 @@ Challenging:
   +5 Food for each Plant within Natura Range. Also gains +20 Food if next to a Plant.
 - Tea Plant 2 10 Food, 7 Natura, 5 Awe +12 Awe for each Tea Plant within Natura Range.
   +1 Natura Range and +35 Technology if this patch has at least 15 Natura.
+- Musk Deer 	1 	2 Food, 1 Wealth, 2 Range 	+1 Wealth for each patch within Animal Range with at least 10 Technology.
++1 Range if at least 2 Danger on this patch.
+- Diamond 	Forest,Desert,Swamp, Mountain 	3 	500 Wealth in Use and 250 Food in Use. 	25 Wealth 	+100 Wealth if next to 2 Plants, and +100 Wealth if there are 2 Minerals within 2 range.
++2.5 Wealth for each 1 Wealth from neighboring Animals.
+- Oil 	+100 Wealth gain 100% of the Food from neighboring Plants as Technology.
++5 Technology for each Plant on the planet. +5 Wealth for each Mineral on the planet. +5 Food for each Animal on the planet.
+  (Wiki has _very_ inconsistent data on Oil. See its Symbiosis Activation, transmutation from Platinum, etc.)
 
 ### Evaluation Order:
 
 - Resources: reverse presentation order, Natura must be first, then Range
 - Natura before everything, for Aspects. See Tea Plant
+- Danger before Range. See Musk Deer - **How?**
+- Danger before Wealth . See White Shark
 - Awe before Technology. See Hemp
-- Wealth before Technology. See Barrel Cactus
+- Technology before Awe. See Anglerfish. **Damn!**
+- Awe before Wealth. See Panda, Coal
+- Awe before Tech. See Coal
+- Wealth before Technology. See Barrel Cactus, Musk Deer
+- Wealth before Food. See Tuna
 - Technology before Food. See Cacao Tree
 - Aspects depend on Natura
 - Natural Sources: Minerals before Plants. See Cardon Cactus, Cinnamomum
 - Plants before Animals. See Buffalo, Lychee
+- Animals before Minerals. See Diamond **Impossible**
